@@ -1,0 +1,11 @@
+#!/bin/bash
+set -e
+
+if wait-for redis redis_cache redis_queue &&
+    wait-for file "$FRAPPE_BENCH_DIR/sites/apps.txt"; then
+    # shellcheck source=/dev/null
+    source "$FRAPPE_BENCH_DIR/env/bin/activate"
+    bench schedule
+else
+    result=$? && echo "timeout, now exit..." && exit $result
+fi

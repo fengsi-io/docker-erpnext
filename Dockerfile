@@ -2,10 +2,10 @@
 FROM debian:buster-slim as frappe-base
 RUN set -ex; \
     useradd -ms /bin/bash frappe; \
-    # cn mirrors
-    sed -i "s@http://.*.debian.org@http://mirrors.cloud.tencent.com@g" /etc/apt/sources.list; \
-    # https://askubuntu.com/questions/875213/apt-get-to-retry-downloading
-    printf '%s\n' 'APT::Acquire::Retries "100";' 'Acquire::http::Proxy "false";' > /etc/apt/apt.conf.d/80-retries; \
+    # # cn mirrors
+    # sed -i "s@http://.*.debian.org@http://mirrors.cloud.tencent.com@g" /etc/apt/sources.list; \
+    # # https://askubuntu.com/questions/875213/apt-get-to-retry-downloading
+    # printf '%s\n' 'APT::Acquire::Retries "100";' 'Acquire::http::Proxy "false";' > /etc/apt/apt.conf.d/80-retries; \
     apt-get update && apt-get install -y \
         # for translate support
         gettext-base \
@@ -35,7 +35,8 @@ RUN set -ex; \
         curl \
         ;\
     # install bench
-    pip3 install -i https://mirrors.cloud.tencent.com/pypi/simple frappe-bench; \
+    # pip3 install -i https://mirrors.cloud.tencent.com/pypi/simple frappe-bench; \
+    pip3 install frappe-bench; \
     curl -LO https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox_0.12.5-1.buster_amd64.deb; \
     dpkg -i wkhtmltox_0.12.5-1.buster_amd64.deb && rm wkhtmltox_0.12.5-1.buster_amd64.deb; \
     # clear cache
@@ -65,7 +66,7 @@ RUN set -ex; \
 WORKDIR /home/frappe
 USER frappe
 RUN set -ex; \
-    pip3 config set global.index-url https://mirrors.cloud.tencent.com/pypi/simple; \
+    # pip3 config set global.index-url https://mirrors.cloud.tencent.com/pypi/simple; \
     bench init --frappe-branch $BRANCH frappe-bench; \
     cd frappe-bench; \
     # get apps

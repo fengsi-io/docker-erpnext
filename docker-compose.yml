@@ -1,0 +1,114 @@
+version: '3'
+
+services:
+    nginx:
+        image: fengsiio/erpnext-nginx:12
+        restart: on-failure
+        ports:
+            - 80:80
+        environment:
+            - FRAPPE_WEB_ENDPOINT=app:${WEBSERVER_PORT}
+            - FRAPPE_SOCKETIO_ENDPOINT=socketio:${SOCKETIO_PORT}
+        volumes:
+            - sites:/home/frappe/frappe-bench/sites:rw
+
+    app:
+        image: fengsiio/erpnext:12
+        restart: on-failure
+        command: serve
+        # command: sleep infinity
+        environment:
+            - SITE_NAME=${SITE_NAME}
+            - DB_NAME=${DB_NAME}
+            - DB_PASSWORD=${DB_PASSWORD}
+            - DB_HOST=mariadb
+            - DB_PORT=3306
+            - ROOT_LOGIN=${ROOT_LOGIN}
+            - ROOT_PASSWORD=${ROOT_PASSWORD}
+            - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+            - SOCKETIO_PORT=${SOCKETIO_PORT}
+            - WEBSERVER_PORT=${WEBSERVER_PORT}
+            # for common
+            - REDIS_CACHE=redis-cache:6379
+            - REDIS_QUEUE=redis-queue:6379
+            - REDIS_SOCKETIO=redis-socketio:6379
+        volumes:
+            - sites:/home/frappe/frappe-bench/sites:rw
+            - ./worker/usr/local/bin/bench-serve:/usr/local/bin/bench-serve
+
+    worker-default: &worker-default
+        image: fengsiio/erpnext:12
+        restart: on-failure
+        command: worker default
+        depends_on:
+            - redis-queue
+            - redis-cache
+        volumes:
+            - sites:/home/frappe/frappe-bench/sites:rw
+
+    worker-short:
+        <<: *worker-default
+        command: worker short
+
+    worker-long:
+        <<: *worker-default
+        command: worker long
+
+    schedule:
+        <<: *worker-default
+        command: schedule
+
+    socketio:
+        image: fengsiio/erpnext-socketio:12
+        restart: on-failure
+        depends_on:
+            - redis-socketio
+        links:
+            - 'nginx:erp.localhost'
+        volumes:
+            - sites:/home/frappe/frappe-bench/sites:rw
+
+    redis-cache:
+        image: redis:latest
+        restart: on-failure
+        command:
+            - redis-server
+            - --appendonly no
+            - --maxmemory 196mb
+            - --maxmemory-policy allkeys-lru
+            - --save ""
+        volumes:
+            - redis-cache:/data
+
+    redis-queue:
+        image: redis:latest
+        restart: on-failure
+        volumes:
+            - redis-queue:/data
+
+    redis-socketio:
+        image: redis:latest
+        restart: on-failure
+        volumes:
+            - redis-socketio:/data
+
+    mariadb:
+        image: mariadb:10.3
+        command:
+            - --character-set-client-handshake=FALSE
+            - --character-set-server=utf8mb4
+            - --collation-server=utf8mb4_unicode_ci
+        ports:
+            - 3306:3306
+        restart: on-failure
+        environment:
+            MYSQL_ROOT_PASSWORD: ${ROOT_PASSWORD}
+        volumes:
+            - mariadb:/var/lib/mysql
+
+volumes:
+    sites:
+    mariadb:
+    redis-cache:
+    redis-queue:
+    redis-socketio:

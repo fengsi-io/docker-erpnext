@@ -1,0 +1,67 @@
+#!/bin/bash
+set -e
+
+RETRY_DURATION="1"
+COMMON_CONFIG=$FRAPPE_BENCH_DIR/sites/common_site_config.json
+
+function wait-for-it() {
+    host=$1 port=$2
+    timeout "$MAX_WAIT_SECONDS" bash -c \
+        "until printf '' 2>>/dev/null >>/dev/tcp/$host/$port; do \
+            sleep $RETRY_DURATION; \
+        done"
+}
+
+function wait-for-file() {
+    for file in "$@"; do
+        if timeout "$MAX_WAIT_SECONDS" bash -c \
+            "until [ -f $file ]; do \
+                sleep $RETRY_DURATION; \
+            done;"; then
+            continue
+        else
+            false && return
+        fi
+    done
+}
+
+function wait-for-redis() {
+    wait-for-file "$COMMON_CONFIG"
+    for key in "$@"; do
+        echo -ne "-> wait redis [$key]: "
+
+        host_port=$(grep -oP "(?<=$key\": \"redis://)\S+:\d+" "$COMMON_CONFIG")
+        host=$(echo "$host_port" | cut -d: -f1)
+        port=$(echo "$host_port" | cut -d: -f2)
+
+        if wait-for-it "$host" "$port"; then
+            echo "done."
+            continue
+        else
+            echo "timeout" && false && return
+        fi
+    done
+}
+
+function wait-for-database() {
+    wait-for-file "$COMMON_CONFIG"
+    host=$(grep -oP "(?<=db_host\": \")\w+" "$COMMON_CONFIG")
+    port=$(grep -oP "(?<=db_port\": )\d+" "$COMMON_CONFIG")
+    echo -ne "-> wait database [$host:$port]: "
+    wait-for-it "$host" "$port" && echo "done."
+}
+
+case "$1" in
+"redis")
+    wait-for-redis "${@:2}"
+    ;;
+"database")
+    wait-for-database
+    ;;
+"file")
+    wait-for-file "$@"
+    ;;
+*)
+    wait-for-it "$1" "$2"
+    ;;
+esac

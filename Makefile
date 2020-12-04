@@ -6,10 +6,10 @@ version  ?= 12
 
 all: worker push
 
-build: worker socketio nginx
+build: erpnext socketio nginx
 
-worker nginx socketio: Dockerfile
-	@if [ "$@" = "worker" ]; then
+erpnext nginx socketio: Dockerfile
+	@if [ "$@" = "erpnext" ]; then
 		image=$(registry)/erpnext:$(version)
 	else
 		image=$(registry)/erpnext-$@:$(version)
@@ -24,8 +24,8 @@ worker nginx socketio: Dockerfile
 		-t $$image .
 
 push:
-	@for i in worker nginx socketio; do
-		if [ "$$i" = "worker" ]; then
+	@for i in erpnext nginx socketio; do
+		if [ "$$i" = "erpnext" ]; then
 			docker push $(registry)/erpnext:$(version)
 			continue
 		fi

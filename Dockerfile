@@ -80,15 +80,15 @@ RUN set -ex; \
     rm -f sites/common_site_config.json;
 
 
-# worker
-FROM frappe-base as worker
+# erpnext
+FROM frappe-base as erpnext
 ENV FRAPPE_BENCH_DIR="/home/frappe/frappe-bench"
 ENV WEBSERVER_PORT=8000
 ENV AUTO_MIGRATE=false
 ENV DB_TYPE=mariadb
 ENV MAX_WAIT_SECONDS=360
 COPY --from=frappe-app-builder --chown=frappe:frappe ${FRAPPE_BENCH_DIR} ${FRAPPE_BENCH_DIR}
-COPY ./worker/ /
+COPY ./erpnext/ /
 # then backup for volume mount
 RUN set -ex; \
     chown --from=root:root -R frappe:frappe "/home/frappe"; \

@@ -34,7 +34,6 @@ services:
             - REDIS_SOCKETIO=redis-socketio:6379
         volumes:
             - sites:/home/frappe/frappe-bench/sites:rw
-            - ./worker/usr/local/bin/bench-serve:/usr/local/bin/bench-serve
 
     worker-default: &worker-default
         image: fengsiio/erpnext:12

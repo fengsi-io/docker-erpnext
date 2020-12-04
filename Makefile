@@ -1,35 +1,26 @@
 registry ?= fengsiio
 version  ?= 12
 
-.PHONY: nginx worker socketio push clean test
-.ONESHELL: worker nginx socketio clean
+.PHONY: erpnext erpnext-nginx erpnext-socketio push clean test
+.ONESHELL: erpnext erpnext-nginx erpnext-socketio clean
 
 all: worker push
 
-build: erpnext socketio nginx
+build: erpnext erpnext-nginx erpnext-socketio
 
-erpnext nginx socketio: Dockerfile
-	@if [ "$@" = "erpnext" ]; then
-		image=$(registry)/erpnext:$(version)
-	else
-		image=$(registry)/erpnext-$@:$(version)
-	fi
+erpnext erpnext-nginx erpnext-socketio: Dockerfile
 	@docker build --progress plain --file $^ \
 		--pull --force-rm \
 		--build-arg http_proxy \
 		--build-arg https_proxy \
 		--build-arg no_proxy \
-		--build-arg version=$(version) \
+		--build-arg VERSION=$(version) \
 		--target $@ \
-		-t $$image .
+		-t $(registry)/erpnext-$@:v$(version) .
 
 push:
-	@for i in erpnext nginx socketio; do
-		if [ "$$i" = "erpnext" ]; then
-			docker push $(registry)/erpnext:$(version)
-			continue
-		fi
-		docker push $(registry)/erpnext-$$i:$(version)
+	@for i in erpnext erpnext-nginx erpnext-socketio; do
+		docker push $(registry)/erpnext-$$i:v$(version)
 	done
 
 test:

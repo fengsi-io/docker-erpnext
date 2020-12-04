@@ -44,8 +44,8 @@ RUN set -ex; \
 
 
 FROM frappe-base as frappe-app-builder
-ARG VARIANT=12
-ARG BRANCH=version-${VARIANT}
+ARG VERSION=12
+ARG BRANCH=version-${VERSION}
 ARG APPS="erpnext https://gitee.com/petel_zhang/EBCLocal"
 RUN set -ex; \
     # for yarn
@@ -101,7 +101,7 @@ CMD ["serve"]
 
 
 # socketio
-FROM node:lts-buster-slim AS socketio
+FROM node:lts-buster-slim AS erpnext-socketio
 ENV FRAPPE_BENCH_DIR="/home/frappe/frappe-bench"
 COPY ./socketio/ /
 RUN set -ex; \
@@ -116,7 +116,7 @@ CMD ["start"]
 
 
 # erpnext-nginx
-FROM nginx:1.19 as nginx
+FROM nginx:1.19 as erpnext-nginx
 ENV MAX_WAIT_SECONDS=360
 COPY --from=frappe-base /usr/local/lib/python3.7/dist-packages/bench/config/templates /etc/nginx/bench_templates
 COPY ./nginx/ /

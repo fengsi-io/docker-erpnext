@@ -43,20 +43,9 @@ function wait-for-redis() {
     done
 }
 
-function wait-for-database() {
-    wait-for-file "$COMMON_CONFIG"
-    host=$(grep -oP "(?<=db_host\": \")\w+" "$COMMON_CONFIG")
-    port=$(grep -oP "(?<=db_port\": )\d+" "$COMMON_CONFIG")
-    echo -ne "-> wait database [$host:$port]: "
-    wait-for-it "$host" "$port" && echo "done."
-}
-
 case "$1" in
 "redis")
     wait-for-redis "${@:2}"
-    ;;
-"database")
-    wait-for-database
     ;;
 "file")
     wait-for-file "$@"

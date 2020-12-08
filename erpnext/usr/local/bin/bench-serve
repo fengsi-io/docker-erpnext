@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-COMMON_SITE_CONFIG_TEMPLATE_FILE=$FRAPPE_BENCH_DIR/sites.original/common_site_config.json.template
+COMMON_SITE_CONFIG_TEMPLATE_FILE=/etc/frappe/common_site_config.json.template
 COMMON_SITE_CONFIG_FILE=$FRAPPE_BENCH_DIR/sites/common_site_config.json
 
 function check_envs() {
@@ -36,12 +36,13 @@ function new_site() {
         DB_PASSWORD
         ADMIN_PASSWORD'
 
-    wait-for database
-
     echo -ne "-> sync original sites files: "
-    rsync -aL "$FRAPPE_BENCH_DIR/sites.original/" "$FRAPPE_BENCH_DIR/sites"
-    rm -rf "$FRAPPE_BENCH_DIR/sites.original"
+    cp -R "$FRAPPE_BENCH_DIR"/sites.origin/* "$FRAPPE_BENCH_DIR"/sites
     echo "done"
+
+    echo -ne "-> wait for database[$DB_HOST:$DB_PORT] ready: "
+    wait-for "$DB_HOST" "$DB_PORT" &&
+        echo "done." || echo "timeout, now exit..."
 
     # then create new site and install apps
     echo "-> create new site $SITE_NAME start"
@@ -69,7 +70,10 @@ function new_site() {
 }
 
 function migrate() {
-    wait-for database
+    echo -ne "-> wait for database[$DB_HOST:$DB_PORT] ready: "
+    wait-for "$DB_HOST" "$DB_PORT" &&
+        echo "done." || echo "timeout, now exit..."
+
     bench ready-for-migration && bench --site "$SITE_NAME" migrate
 }
 
@@ -86,15 +90,15 @@ function serve() {
         migrate
     fi
 
-    source "$FRAPPE_BENCH_DIR/env/bin/activate"
-    gunicorn -b "0.0.0.0:$WEBSERVER_PORT" \
-        --worker-tmp-dir /dev/shm \
-        --workers=$(($(nproc) * 2 + 1)) \
-        --worker-class=gthread \
-        --threads=4 \
-        --log-file=- \
-        --error-logfile=- \
-        -t 120 frappe.app:application --preload
+    . "$FRAPPE_BENCH_DIR"/env/bin/activate &&
+        gunicorn -b "0.0.0.0:$WEBSERVER_PORT" \
+            --worker-tmp-dir /dev/shm \
+            --workers=$(($(nproc) * 2 + 1)) \
+            --worker-class=gthread \
+            --threads=4 \
+            --log-file=- \
+            --error-logfile=- \
+            -t 120 frappe.app:application --preload
 }
 
 serve

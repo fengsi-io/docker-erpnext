@@ -62,8 +62,6 @@ services:
         restart: on-failure
         depends_on:
             - redis-socketio
-        links:
-            - 'nginx:erp.localhost'
         volumes:
             - sites:/home/frappe/frappe-bench/sites:rw
 

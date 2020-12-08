@@ -20,7 +20,7 @@ jobs:
         strategy:
             matrix:
                 version: [12]
-                target: [erpnext, erpnext-nginx, erpnext-socketio]
+                target: [frappe-nginx, frappe-socketio, erpnext]
 
         steps:
             - name: Checkout 🛎

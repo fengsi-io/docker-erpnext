@@ -6,21 +6,22 @@ version  ?= 12
 
 all: worker push
 
-build: erpnext erpnext-nginx erpnext-socketio
+build: frappe-nginx frappe-socketio erpnext
 
-erpnext erpnext-nginx erpnext-socketio: Dockerfile
-	@docker build --progress plain --file $^ \
-		--pull --force-rm \
+frappe-nginx frappe-socketio erpnext: Dockerfile
+	@docker build --file $^ \
+		--progress plain \
+		--force-rm \
 		--build-arg http_proxy \
 		--build-arg https_proxy \
 		--build-arg no_proxy \
 		--build-arg VERSION=$(version) \
 		--target $@ \
-		-t $(registry)/erpnext-$@:v$(version) .
+		-t $(registry)/$@:v$(version) .
 
 push:
 	@for i in erpnext erpnext-nginx erpnext-socketio; do
-		docker push $(registry)/erpnext-$$i:v$(version)
+		docker push $(registry)/$$i:v$(version)
 	done
 
 test:

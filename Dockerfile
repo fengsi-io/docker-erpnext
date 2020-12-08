@@ -1,123 +1,115 @@
-# erpnext-web
-FROM debian:buster-slim as frappe-base
+FROM debian:buster-slim AS base
 RUN set -ex; \
-    useradd -ms /bin/bash frappe; \
-    # # cn mirrors
-    # sed -i "s@http://.*.debian.org@http://mirrors.cloud.tencent.com@g" /etc/apt/sources.list; \
-    # # https://askubuntu.com/questions/875213/apt-get-to-retry-downloading
-    # printf '%s\n' 'APT::Acquire::Retries "100";' 'Acquire::http::Proxy "false";' > /etc/apt/apt.conf.d/80-retries; \
+    groupadd --gid 1000 frappe; \
+    useradd --uid 1000 --gid frappe --shell /bin/bash --create-home frappe; \
+    if [ ! -z ${http_proxy+x} ]; then \
+        sed -i "s@http://.*.debian.org@http://mirrors.aliyun.com@g" /etc/apt/sources.list; \
+    fi; \
+    # install python
     apt-get update && apt-get install -y \
-        # for translate support
-        gettext-base \
-        # for database support
-        mariadb-client \
-        # for PDF support
-        libjpeg62-turbo \
-        libx11-6 \
-        libxcb1 \
-        libxext6 \
-        libxrender1 \
-        libssl-dev \
-        fonts-cantarell \
-        xfonts-75dpi \
-        xfonts-base \
-        # # postgresql support
-        # postgresql-client \
-        # libpq-dev \
-        #
-        # for bench
-        git \
         python3 \
         python3-pip \
-        # utils for docker entrypoint script
-        rsync \
-        # for temporary use
-        curl \
-        ;\
+        ; \
+    apt-get clean && rm -rf /var/lib/apt/lists/*; \
     # install bench
-    # pip3 install -i https://mirrors.cloud.tencent.com/pypi/simple frappe-bench; \
-    pip3 install frappe-bench; \
-    curl -LO https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.5/wkhtmltox_0.12.5-1.buster_amd64.deb; \
-    dpkg -i wkhtmltox_0.12.5-1.buster_amd64.deb && rm wkhtmltox_0.12.5-1.buster_amd64.deb; \
-    # clear cache
-    apt-get purge -y curl && apt-get autoremove -y; \
-    apt-get clean && rm -rf /var/lib/apt/lists/*;
+    if [ ! -z ${http_proxy+x} ]; then \
+        pip3 config --global set global.index-url https://mirrors.aliyun.com/pypi/simple; \
+    fi; \
+    pip3 install --quiet --no-cache-dir frappe-bench;
 
 
-FROM frappe-base as frappe-app-builder
+#
+# installer
+# default apps:
+# 1. erpnext
+# 2. EBCLocal
+#
+FROM base as installer
 ARG VERSION=12
-ARG BRANCH=version-${VERSION}
 ARG APPS="erpnext https://gitee.com/petel_zhang/EBCLocal"
 RUN set -ex; \
-    # for yarn
+    # for bench init dependence
     apt-get update && apt-get install -y \
-        gnupg2 \
-        curl \
+        git \
+        python3-venv \
+        yarnpkg \
         cron \
-        nodejs \
-        redis-server \
-        sudo \
         ; \
-    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -; \
-    echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list; \
-    # install dev dependence
-    apt-get update && apt-get install -y yarn ; \
-    usermod -aG sudo frappe && sed -i /etc/sudoers -re 's/^%sudo.*/%sudo    ALL=(ALL:ALL) NOPASSWD: ALL/g';
-WORKDIR /home/frappe
+    ln -s $(which yarnpkg) /usr/local/bin/yarn; \
+    apt-get clean && rm -rf /var/lib/apt/lists/*;
 USER frappe
+WORKDIR /home/frappe
 RUN set -ex; \
-    # pip3 config set global.index-url https://mirrors.cloud.tencent.com/pypi/simple; \
-    bench init --frappe-branch $BRANCH frappe-bench; \
-    cd frappe-bench; \
-    # get apps
-    for app in $APPS; do bench get-app --branch $BRANCH $app; done; \
-    # clean node_modules
-    for app in $(ls apps); do \
-        cd apps/$app; \
-        yarn install --production --ignore-scripts --prefer-offline; \
-        cd ../../; \
+    bench init --frappe-branch "version-${VERSION}" --no-procfile --skip-redis-config-generation frappe-bench;\
+    # install apps
+    cd frappe-bench && for app in $APPS; do \
+        bench get-app --branch "version-${VERSION}" $app; \
     done; \
-    find apps -name '.git*' -print -exec rm -rf '{}' +; \
-    rm -f sites/common_site_config.json;
-
-
-# erpnext
-FROM frappe-base as erpnext
-ENV FRAPPE_BENCH_DIR="/home/frappe/frappe-bench"
-ENV WEBSERVER_PORT=8000
-ENV AUTO_MIGRATE=false
-ENV DB_TYPE=mariadb
-ENV MAX_WAIT_SECONDS=360
-COPY --from=frappe-app-builder --chown=frappe:frappe ${FRAPPE_BENCH_DIR} ${FRAPPE_BENCH_DIR}
-COPY ./erpnext/ /
-# then backup for volume mount
-RUN set -ex; \
-    chown --from=root:root -R frappe:frappe "/home/frappe"; \
-    su frappe --command "rsync -a \
-        ${FRAPPE_BENCH_DIR}/sites/ ${FRAPPE_BENCH_DIR}/sites.original"; \
-    rm -rf ${FRAPPE_BENCH_DIR}/sites/;
-WORKDIR ${FRAPPE_BENCH_DIR}/sites
-ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["serve"]
+    # cleanup
+    . $HOME/frappe-bench/env/bin/activate && pip cache purge; \
+    apps=$(ls apps); for app in $apps; do \
+        yarn --cwd ./apps/$app install --quiet --production --ignore-scripts --prefer-offline; \
+    done;
 
 
 # socketio
-FROM node:lts-buster-slim AS erpnext-socketio
+FROM node:14-buster-slim AS frappe-socketio
 ENV FRAPPE_BENCH_DIR="/home/frappe/frappe-bench"
-COPY ./socketio/ /
+COPY --from=installer $FRAPPE_BENCH_DIR/apps/frappe/*.js $FRAPPE_BENCH_DIR/apps/frappe/
 RUN set -ex; \
-    useradd -ms /bin/bash frappe; \
-    chown --from=root:root -R frappe:frappe "/home/frappe"; \
-    cd $FRAPPE_BENCH_DIR/apps/frappe; \
-    su frappe --command "npm install --only=production; npm cache clean --force";
-COPY --from=frappe-app-builder --chown=frappe:frappe ${FRAPPE_BENCH_DIR}/apps/frappe/*.js $FRAPPE_BENCH_DIR/apps/frappe/
-WORKDIR ${FRAPPE_BENCH_DIR}/sites
+    if [ ! -z ${http_proxy+x} ]; then \
+        npm config set registry https://registry.npm.taobao.org; \
+    fi; \
+    cd $FRAPPE_BENCH_DIR/apps/frappe/ && npm init -y --silent; \
+    npm install --silent --production --cwd $FRAPPE_BENCH_DIR/apps/frappe \
+        express@^4.17.1 \
+        redis@^2.8.0 \
+        socket.io@^2.3.0 \
+        superagent@^5.1.0 \
+        ;
+COPY ./socketio/ /
+WORKDIR ${FRAPPE_BENCH_DIR}
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["start"]
 
 
 # erpnext-nginx
-FROM nginx:1.19 as erpnext-nginx
+FROM nginx:1.19 as frappe-nginx
 ENV MAX_WAIT_SECONDS=360
-COPY --from=frappe-base /usr/local/lib/python3.7/dist-packages/bench/config/templates /etc/nginx/bench_templates
+COPY --from=installer /usr/local/lib/python3.7/dist-packages/bench/config/templates /etc/nginx/bench_templates
 COPY ./nginx/ /
+
+
+#
+# base runtime package and libs
+#
+FROM base as erpnext
+ENV FRAPPE_BENCH_DIR="/home/frappe/frappe-bench"
+COPY --from=installer --chown=frappe:frappe /home/frappe /home/frappe
+RUN set -ex; \
+    apt-get update; \
+    # install wkhtmltopdf and fonts
+    apt-get install -y curl; \
+    curl -LO https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox_0.12.6-1.buster_amd64.deb; \
+    apt-get install -y fonts-noto fonts-noto-extra fonts-noto-color-emoji fonts-noto-cjk ./*.deb && rm ./*.deb; \
+    apt-get purge -y curl; \
+    # for envsubst
+    apt-get install -y mariadb-client gettext; \
+    su frappe --command "\
+        rm -rf $FRAPPE_BENCH_DIR/sites/common_site_config.json; \
+        cp -LR $FRAPPE_BENCH_DIR/sites $FRAPPE_BENCH_DIR/sites.origin; \
+        rm -rf $FRAPPE_BENCH_DIR/sites; \
+    "; \
+    # final clean
+    apt-get autoremove -y; \
+    apt-get clean; \
+    rm -rf /var/lib/apt/lists/*;
+COPY ./erpnext/ /
+WORKDIR ${FRAPPE_BENCH_DIR}/sites
+ENV WEBSERVER_PORT=8000
+ENV AUTO_MIGRATE=false
+ENV DB_TYPE=mariadb
+ENV MAX_WAIT_SECONDS=360
+ENV GIT_PYTHON_REFRESH=quiet
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["serve"]

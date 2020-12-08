@@ -1,9 +1,9 @@
 upstream frappe {
-	server ${FRAPPE_WEB_ENDPOINT} fail_timeout=0;
+	server ${FRAPPE_WEB_ENDPOINT};
 }
 
 upstream socketio {
-	server ${FRAPPE_SOCKETIO_ENDPOINT} fail_timeout=0;
+	server ${FRAPPE_SOCKETIO_ENDPOINT};
 }
 
 server {

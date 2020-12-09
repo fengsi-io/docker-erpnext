@@ -49,9 +49,9 @@ jobs:
               uses: actions/cache@v2
               with:
                   path: /tmp/.buildx-cache
-                  key: ${{ runner.os }}-buildx-${{ github.sha }}-${{matrix.target}}
+                  key: ${{ runner.os }}-buildx-${{ hashFiles('Dockerfile') }}
                   restore-keys: |
-                      ${{ runner.os }}-buildx-${{matrix.target}}
+                      ${{ runner.os }}-buildx
 
             - name: Login to Registry
               if: success()

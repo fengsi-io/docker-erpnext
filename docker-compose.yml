@@ -34,6 +34,8 @@ services:
             - REDIS_SOCKETIO=redis-socketio:6379
         volumes:
             - sites:/home/frappe/frappe-bench/sites:rw
+        links:
+            - "nginx:${SITE_NAME}"
 
     worker-default: &worker-default
         image: fengsiio/erpnext:v12

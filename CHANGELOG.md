@@ -1,5 +1,13 @@
 # Changelog
 
+### [1.1.1](https://www.github.com/fengsi-io/docker-erpnext/compare/v1.1.0...v1.1.1) (2020-12-09)
+
+
+### Bug Fixes
+
+* remove erpnext ([7390dcd](https://www.github.com/fengsi-io/docker-erpnext/commit/7390dcdc192cbd96a3a6ab7b2f38849654ca743d))
+* 打印样式不正常问题 ([43b8031](https://www.github.com/fengsi-io/docker-erpnext/commit/43b8031ecaa169e4273bb49f756cf63b0e3c765e))
+
 ## [1.1.0](https://www.github.com/fengsi-io/docker-erpnext/compare/v1.0.0...v1.1.0) (2020-12-09)
 
 

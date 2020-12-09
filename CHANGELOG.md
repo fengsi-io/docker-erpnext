@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://www.github.com/fengsi-io/docker-erpnext/compare/v1.0.0...v1.1.0) (2020-12-09)
+
+
+### Features
+
+* add AUTO_MIGRATE suppo refactor build ([400c4d7](https://www.github.com/fengsi-io/docker-erpnext/commit/400c4d71106a7d35178672e4bc6cdecb16ce4f86))
+
+
+### Bug Fixes
+
+* ci docker build failed ([b92c5e4](https://www.github.com/fengsi-io/docker-erpnext/commit/b92c5e45ed33049b13089ae0e236bc2d00428a11))
+
 ## 1.0.0 (2020-12-05)
 
 

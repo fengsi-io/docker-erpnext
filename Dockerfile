@@ -26,7 +26,9 @@ RUN set -ex; \
 #
 FROM base as installer
 ARG VERSION=12
-ARG APPS="erpnext https://gitee.com/petel_zhang/EBCLocal"
+ARG APPS="erpnext \
+    # https://gitee.com/petel_zhang/EBCLocal \
+    "
 RUN set -ex; \
     # for bench init dependence
     apt-get update && apt-get install -y \

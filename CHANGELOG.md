@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://www.github.com/fengsi-io/docker-erpnext/compare/v1.1.1...v1.2.0) (2020-12-16)
+
+
+### Features
+
+* split erpnext version and frappe version ([aeb6bdd](https://www.github.com/fengsi-io/docker-erpnext/commit/aeb6bdd2e6782e6d332400d589bbab370ce13703))
+
 ### [1.1.1](https://www.github.com/fengsi-io/docker-erpnext/compare/v1.1.0...v1.1.1) (2020-12-09)
 
 

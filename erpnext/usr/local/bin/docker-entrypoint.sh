@@ -12,6 +12,9 @@ case "$1" in
 "worker")
     su frappe --command "bench-worker $2"
     ;;
+"bench")
+    su frappe --command "$@"
+    ;;
 *)
     exec "$@"
     ;;

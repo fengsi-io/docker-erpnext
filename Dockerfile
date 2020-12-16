@@ -22,12 +22,12 @@ RUN set -ex; \
 # installer
 # default apps:
 # 1. erpnext
-# 2. EBCLocal
 #
 FROM base as installer
-ARG VERSION=12
-ARG APPS="erpnext \
-    # https://gitee.com/petel_zhang/EBCLocal \
+ARG FRAPPE_VERSION=version-12
+ARG ERPNEXT_VERSION=version-12
+ARG APPS="erpnext@${ERPNEXT_VERSION} \
+    # https://gitee.com/petel_zhang/EBCLocal@version
     "
 RUN set -ex; \
     # for bench init dependence
@@ -42,10 +42,12 @@ RUN set -ex; \
 USER frappe
 WORKDIR /home/frappe
 RUN set -ex; \
-    bench init --frappe-branch "version-${VERSION}" --no-procfile --skip-redis-config-generation frappe-bench;\
+    bench init --frappe-branch "${FRAPPE_VERSION}" --no-procfile --skip-redis-config-generation frappe-bench;\
     # install apps
-    cd frappe-bench && for app in $APPS; do \
-        bench get-app --branch "version-${VERSION}" $app; \
+    cd frappe-bench && for app_string in $APPS; do \
+        app=$(echo $app_string | cut -d'@' -f1); \
+        app_version=$(echo $app_string | cut -d'@' -f2); \
+        bench get-app --branch "${app_version}" $app; \
     done; \
     # cleanup
     . $HOME/frappe-bench/env/bin/activate && pip cache purge; \

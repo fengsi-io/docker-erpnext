@@ -5,13 +5,15 @@ on:
         branches:
             - main
             - master
-            - 'v*'
         paths:
             - '.github/workflows/ci.yml'
             - 'nginx/**'
             - 'socketio/**'
             - 'erpnext/**'
             - 'Dockerfile'
+    # monthly build mainline
+    schedule:
+        - cron: '0 0 1 * *'
 
 jobs:
     docker-build-push:
@@ -19,7 +21,8 @@ jobs:
 
         strategy:
             matrix:
-                version: [12]
+                frappe_version: [version-12]
+                erpnext_version: [version-12]
                 target: [frappe-nginx, frappe-socketio, erpnext]
 
         steps:
@@ -29,12 +32,19 @@ jobs:
             - name: Docker meta
               if: success()
               id: docker_meta
-              uses: crazy-max/ghaction-docker-meta@v1
-              with:
-                  images: fengsiio/${{matrix.target}}
-                  tag-semver: |
-                      {{ version }}
-                      {{major}}.{{minor}}
+              shell: bash
+              env:
+                  frappe_version: ${{matrix.frappe_version}}
+                  erpnext_version: ${{matrix.erpnext_version}}
+                  target: ${{matrix.target}}
+              run: |
+                  image=fengsiio/${target}
+                  echo "::group::Tags"
+                  [ "${target}" = "erpnext" ] && version=$erpnext_version || version=$frappe_version
+                  tags=$image:$(echo $version | sed 's/[^0-9.]*//g')
+                  echo "::set-output name=tags::${tags}"
+                  echo "${tags}"
+                  echo "::endgroup::"
 
             - name: Set up QEMU
               if: success()
@@ -68,8 +78,8 @@ jobs:
                   platforms: linux/amd64
                   target: ${{matrix.target}}
                   build-args: |
-                    VERSION=${{ matrix.version }}
+                      FRAPPE_VERSION=${{ matrix.frappe_version }}
+                      ERPNEXT_VERSION=${{ matrix.erpnext_version }}
                   tags: ${{ steps.docker_meta.outputs.tags }}
-                  labels: ${{ steps.docker_meta.outputs.labels }}
                   cache-from: type=local,src=/tmp/.buildx-cache
                   cache-to: type=local,dest=/tmp/.buildx-cache,mode=max

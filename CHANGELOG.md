@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.2.1](https://www.github.com/fengsi-io/docker-erpnext/compare/v1.2.0...v1.2.1) (2021-02-18)
+
+
+### Bug Fixes
+
+* **deps:** bump actions/cache from v2 to v2.1.4 ([5d8d317](https://www.github.com/fengsi-io/docker-erpnext/commit/5d8d317e5a4d2016e7f1d44e4f28886b14a0fb0f))
+
 ## [1.2.0](https://www.github.com/fengsi-io/docker-erpnext/compare/v1.1.1...v1.2.0) (2020-12-16)
 
 

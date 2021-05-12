@@ -1,8 +1,17 @@
-version: '3'
+version: "3"
 
 services:
     nginx:
-        image: fengsiio/frappe-nginx:v12
+        image: fengsiio/frappe-nginx:${FRAPPE_VERSION}
+        build:
+            context: .
+            target: frappe-nginx
+            args:
+                http_proxy: ${http_proxy}
+                https_proxy: ${https_proxy}
+                https_proxy: ${all_proxy}
+                FRAPPE_VERSION: ${FRAPPE_VERSION}
+                ERPNEXT_VERSION: ${ERPNEXT_VERSION}
         restart: on-failure
         ports:
             - 80:80
@@ -13,7 +22,16 @@ services:
             - sites:/home/frappe/frappe-bench/sites:rw
 
     erpnext:
-        image: fengsiio/erpnext:v12
+        image: fengsiio/erpnext:${ERPNEXT_VERSION}
+        build:
+            context: .
+            target: erpnext
+            args:
+                http_proxy: ${http_proxy}
+                https_proxy: ${https_proxy}
+                https_proxy: ${all_proxy}
+                FRAPPE_VERSION: ${FRAPPE_VERSION}
+                ERPNEXT_VERSION: ${ERPNEXT_VERSION}
         restart: on-failure
         command: serve
         environment:
@@ -38,7 +56,7 @@ services:
             - "nginx:${SITE_NAME}"
 
     worker-default: &worker-default
-        image: fengsiio/erpnext:v12
+        image: fengsiio/erpnext:${ERPNEXT_VERSION}
         restart: on-failure
         command: worker default
         depends_on:
@@ -60,7 +78,16 @@ services:
         command: schedule
 
     socketio:
-        image: fengsiio/frappe-socketio:v12
+        image: fengsiio/frappe-socketio:${FRAPPE_VERSION}
+        build:
+            context: .
+            target: frappe-socketio
+            args:
+                http_proxy: ${http_proxy}
+                https_proxy: ${https_proxy}
+                https_proxy: ${all_proxy}
+                FRAPPE_VERSION: ${FRAPPE_VERSION}
+                ERPNEXT_VERSION: ${ERPNEXT_VERSION}
         restart: on-failure
         depends_on:
             - redis-socketio

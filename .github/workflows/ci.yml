@@ -67,9 +67,10 @@ jobs:
                   push: true
                   platforms: linux/amd64
                   target: ${{matrix.target}}
+                  tags: ${{ steps.meta.outputs.tags }}
+                  labels: ${{ steps.meta.outputs.labels }}
                   build-args: |
                       FRAPPE_VERSION=${{ matrix.version }}
                       ERPNEXT_VERSION=${{ matrix.version }}
-                  tags: ${{ steps.docker_meta.outputs.tags }}
                   cache-from: type=local,src=/tmp/.buildx-cache
                   cache-to: type=local,dest=/tmp/.buildx-cache,mode=max

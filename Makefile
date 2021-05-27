@@ -1,31 +1,23 @@
 registry ?= fengsiio
-version  ?= 12
+version  ?= 13
 
 .PHONY: erpnext erpnext-nginx erpnext-socketio push clean test
 .ONESHELL: erpnext erpnext-nginx erpnext-socketio clean
 
 all: worker push
 
-build: frappe-nginx frappe-socketio erpnext
+build: build-nginx build-socketio build-erpnext
 
-frappe-nginx frappe-socketio erpnext: Dockerfile
-	@docker build --file $^ \
-		--progress plain \
-		--force-rm \
-		--build-arg http_proxy \
-		--build-arg https_proxy \
-		--build-arg no_proxy \
-		--build-arg VERSION=$(version) \
-		--target $@ \
-		-t $(registry)/$@:v$(version) .
+build-%: docker-compose.yml
+	@docker-compose build $*
 
-push:
-	@for i in erpnext erpnext-nginx erpnext-socketio; do
-		docker push $(registry)/$$i:v$(version)
-	done
+push: push-nginx push-socketio push-erpnext
+
+push-%: build-%
+	@[ "$*" == "erpnext" ] && docker push fengsiio/erpnext:$(version) || docker push fengsiio/frappe-$*:$(version)
 
 test:
-	@docker-compose up -d --remove-orphans;
+	@docker-compose up -d --remove-orphans --no-build;
 	@docker-compose logs -ft;
 
 clean:

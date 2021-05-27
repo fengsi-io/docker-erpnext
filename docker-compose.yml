@@ -10,8 +10,8 @@ services:
                 http_proxy: ${http_proxy}
                 https_proxy: ${https_proxy}
                 https_proxy: ${all_proxy}
-                FRAPPE_VERSION: ${FRAPPE_VERSION}
-                ERPNEXT_VERSION: ${ERPNEXT_VERSION}
+                FRAPPE_VERSION: version-${FRAPPE_VERSION}
+                ERPNEXT_VERSION: version-${ERPNEXT_VERSION}
         restart: on-failure
         ports:
             - 80:80
@@ -30,8 +30,8 @@ services:
                 http_proxy: ${http_proxy}
                 https_proxy: ${https_proxy}
                 https_proxy: ${all_proxy}
-                FRAPPE_VERSION: ${FRAPPE_VERSION}
-                ERPNEXT_VERSION: ${ERPNEXT_VERSION}
+                FRAPPE_VERSION: version-${FRAPPE_VERSION}
+                ERPNEXT_VERSION: version-${ERPNEXT_VERSION}
         restart: on-failure
         command: serve
         environment:
@@ -86,8 +86,8 @@ services:
                 http_proxy: ${http_proxy}
                 https_proxy: ${https_proxy}
                 https_proxy: ${all_proxy}
-                FRAPPE_VERSION: ${FRAPPE_VERSION}
-                ERPNEXT_VERSION: ${ERPNEXT_VERSION}
+                FRAPPE_VERSION: version-${FRAPPE_VERSION}
+                ERPNEXT_VERSION: version-${ERPNEXT_VERSION}
         restart: on-failure
         depends_on:
             - redis-socketio
@@ -135,7 +135,6 @@ services:
 volumes:
     sites:
     mariadb:
-    postgresql:
     redis-cache:
     redis-queue:
     redis-socketio:

@@ -5,15 +5,15 @@
         // Update 'VARIANT' to pick an Debian version: buster, stretch
 		"target": "dev",
 		"args": {
-			"http_proxy": "http://host.docker.internal:1080",
-			"https_proxy": "http://host.docker.internal:1080",
-			"all_proxy": "socks5h://host.docker.internal:1080",
+			"http_proxy": "${localEnv:http_proxy}",
+			"https_proxy": "${localEnv:https_proxy}",
+			"all_proxy": "${localEnv:all_proxy}",
 		}
 	},
 
 	// Set *default* container specific settings.json values on container create.
 	"settings": {
-		"terminal.integrated.shell.linux": "/usr/bin/fish"
+		"terminal.integrated.defaultProfile.linux": "/usr/bin/fish"
 	},
 
 	// Add the IDs of extensions you want installed when the container is created.

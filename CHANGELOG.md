@@ -1,5 +1,15 @@
 # Changelog
 
+### [1.2.3](https://www.github.com/fengsi-io/docker-erpnext/compare/v1.2.2...v1.2.3) (2021-05-27)
+
+
+### Bug Fixes
+
+* **deps:** bump docker/build-push-action from 2.4.0 to 2.5.0 ([a9686c3](https://www.github.com/fengsi-io/docker-erpnext/commit/a9686c310312fd5cbfd9d5d7eead75ff6fe50574))
+* **deps:** bump docker/metadata-action from 3.1.0 to 3.2.0 ([db471bd](https://www.github.com/fengsi-io/docker-erpnext/commit/db471bd30da4137686f86f73f1a161a1dca99e76))
+* **deps:** bump docker/metadata-action from 3.2.0 to 3.3.0 ([93e9cbf](https://www.github.com/fengsi-io/docker-erpnext/commit/93e9cbf9934761f85d0ab70bb8539e78139c66ba))
+* **deps:** bump docker/setup-qemu-action from 1.1.0 to 1.2.0 ([ab3966a](https://www.github.com/fengsi-io/docker-erpnext/commit/ab3966a8f57b4539a256c93c50378c87af691b09))
+
 ### [1.2.2](https://www.github.com/fengsi-io/docker-erpnext/compare/v1.2.1...v1.2.2) (2021-05-12)
 
 
